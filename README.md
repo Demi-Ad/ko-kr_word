@@ -1,0 +1,1 @@
+# ko-kr_word
