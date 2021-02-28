@@ -24,7 +24,7 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     return curd.create_user(db=db, user=user)
 
 
-@app.get("/users/{user_name}", response_model=schemas.User)
+@app.get("/users/{user_name}", response_model=schemas.UserGet)
 def read_user(user_name: str, db: Session = Depends(get_db)):
     db_user = curd.get_user(db, name=user_name)
     return db_user

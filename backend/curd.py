@@ -17,7 +17,7 @@ def get_user(db: Session, name: str):
 
 
 def create_user(db: Session, user: schemas.UserCreate):
-    db_user = model.User(user_name=user.user_name, point=user.point)
+    db_user = model.User(user_name=user.user_name, point=0)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

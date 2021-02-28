@@ -12,7 +12,6 @@ class WordBase(BaseModel):
 
 class User(BaseModel):
     user_name: str
-    point: int
 
     class Config:
         orm_mode = True
@@ -23,4 +22,8 @@ class UserCreate(User):
 
 
 class UserUpdate(User):
-    pass
+    point: int
+
+
+class UserGet(User):
+    point: int
