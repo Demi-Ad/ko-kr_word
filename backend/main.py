@@ -30,13 +30,27 @@ def read_user(user_name: str, db: Session = Depends(get_db)):
     return db_user
 
 
+@app.get("/rank", response_model=List[schemas.UserGet])
+def user_rank(db: Session = Depends(get_db)):
+    return curd.user_rank(db=db)
+
+
 @app.get("/word/{start_word}", response_model=List[schemas.WordBase])
 def read_word(word: str, db: Session = Depends(get_db)):
     db_word = curd.get_word(db, start_word=word[-1])
     return db_word
 
 
-@app.put("/users/{user_name}/{point}", response_model=schemas.User)
+@app.get("/check/{word}")
+def select_word(word: str, db: Session = Depends(get_db)):
+    db_word = curd.select_word(db, word)
+    if db_word is not None:
+        return True
+    else:
+        return False
+
+
+@app.put("/users/{user_name}/{point}", response_model=schemas.UserUpdate)
 def update_user(user_name: str, point: int, db: Session = Depends(get_db)):
     db_user = curd.update_user(db, user_name=user_name, update_point=point)
     return db_user
