@@ -35,7 +35,7 @@ def user_rank(db: Session = Depends(get_db)):
     return curd.user_rank(db=db)
 
 
-@app.get("/word/{start_word}", response_model=List[schemas.WordBase])
+@app.get("/word", response_model=List[schemas.WordBase])
 def read_word(word: str, db: Session = Depends(get_db)):
     db_word = curd.get_word(db, start_word=word[-1])
     return db_word
