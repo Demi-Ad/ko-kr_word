@@ -1,9 +1,10 @@
 import requests
-from include.config import user_url, word_url, check_url
+from include.config import user_url, word_url, check_url, rank_url
 import json
 from urllib import parse
-from random import randint
+from random import randint, choice
 from typing import Union
+import sys
 
 
 class Game:
@@ -25,13 +26,30 @@ class Game:
             self.call_word_list.append(i)
 
     @staticmethod
-    def intro():
+    def intro() -> None:
+        """
+        게임 시작 할때 안내사항
+        :return: None
+        """
         print("안녕하세요 끝말잇기에 오신걸 환영합니다")
         print("규칙은 다음과 같습니다")
         print("1.단어는 DB에 등록된 단어를 기준으로 합니다")
         print("2.점수는 기본점수 5점 + 단어의 길이 마다 1점씩")
         print("3.레드 카드는 총 3번 입니다")
         print("끝말잇기를 시작합니다.")
+
+    @staticmethod
+    def rank() -> None:
+        """
+        등록된 유저에 순위
+        :return: None
+        """
+        rank_count = 1
+        rank_call = requests.get(url=rank_url)
+        db_rank = json.loads(rank_call.text)
+        for temp in db_rank:
+            print("{0}등... {1} 점수 : {2}".format(rank_count, temp["user_name"], temp["point"]))
+            rank_count += 1
 
 
 class Player(Game):
@@ -73,7 +91,7 @@ class Player(Game):
                 return speak_word[-1]
             else:
                 self.red_card += 1
-                print("그런말은 없네요")
+                print("그런단어는 사전에 없어요")
                 return False
         else:
             print("이미 말햇어요")
@@ -89,12 +107,23 @@ class Pc(Game):
     """
     PC
     """
+    rand_num = (-1, 1)
+
     def speck(self) -> str:
         """
         Pc가 대답 할 때
         :return: 대답한 단어에 마지막 어절
         """
-        answer = self.call_word_list[randint(0, len(self.call_word_list) - 1)]["WORD"]
+
+        idx = randint(0, len(self.call_word_list) - 1)
+        answer = self.call_word_list[randint(0, idx)]["WORD"]
+        while True:
+            if answer in self.call_word_list:
+                idx += choice(self.rand_num)
+                answer = self.call_word_list[randint(0, idx)]["WORD"]
+            else:
+                break
+
         self.word_result.append(answer)
         print(answer)
         return answer[-1]
@@ -123,20 +152,33 @@ def main() -> None:
             continue
         else:
             pass
+
         if answer is None:
             pass
         else:
             if answer != input_word[0]:
-                print("마지막 말이랑 달라요")
+                print("앞서 말한 단어를 잘 봐주세요")
                 player.red_card += 1
                 continue
+
         user_speck = player.word_speak(speak_word=input_word)
         if not user_speck:
             continue
+
         player.call_word(word=input_word)
         player.point += (base_point + len(input_word))
         answer = pc.speck()
 
 
 if __name__ == '__main__':
-    main()
+    argv = sys.argv
+    if len(argv) == 2:
+        if argv[1] == "start":
+            main()
+        elif argv[1] == "rank":
+            # TODO : 랭크 구현
+            Game.rank()
+        else:
+            main()
+    else:
+        main()
