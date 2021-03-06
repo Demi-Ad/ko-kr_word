@@ -1,9 +1,10 @@
 import requests
 from include.config import user_url, word_url, check_url, rank_url
+from include.WordConvert import doum_conveter
 import json
 from urllib import parse
 from random import randint, choice
-from typing import Union
+from typing import Union, Tuple
 import sys
 
 
@@ -59,7 +60,7 @@ class Player(Game):
     red_card = 0  # 사용자가 실수 했을때 올릴 변수
 
     def __init__(self, username: str):
-        self.user = username
+        self.user: str = username
         self.point: int = 0
 
     def user_check(self):
@@ -69,11 +70,11 @@ class Player(Game):
         :return:
         """
         info = requests.get(url=user_url + self.user)
-        if info.text != "null":
+        if info.text != "null":  # DB에 유저가 존재 한다면
             json_parsing = json.loads(info.text)
             print("또 보니 반가워요 {0} 가장 높은 점수는 {1}이에요".format(json_parsing["user_name"],
                                                           json_parsing["point"]))
-        else:
+        else:  # DB에 유저가 존재하지 않는다면
             user_input = {"user_name": self.user}
             data = json.dumps(user_input)
             requests.post(url=user_url, data=data)
@@ -107,9 +108,9 @@ class Pc(Game):
     """
     PC
     """
-    rand_num = (-1, 1)
+    rand_num = (-1, 1)  # 컴퓨터가 같은 단어를 고를 경우 전 후 단어 선택
 
-    def speck(self) -> str:
+    def speck(self) -> Union[str, Tuple[str, str]]:
         """
         Pc가 대답 할 때
         :return: 대답한 단어에 마지막 어절
@@ -123,10 +124,15 @@ class Pc(Game):
                 answer = self.call_word_list[randint(0, idx)]["WORD"]
             else:
                 break
-
-        self.word_result.append(answer)
-        print(answer)
-        return answer[-1]
+        temp = doum_conveter(word=answer)
+        if type(temp) == tuple:
+            self.word_result.append(answer)
+            print("{0}({1})".format(answer, temp[-1]))
+            return answer[-1], temp[-1]
+        else:
+            self.word_result.append(answer)
+            print(answer)
+            return answer[-1]
 
 
 def main() -> None:
@@ -156,10 +162,17 @@ def main() -> None:
         if answer is None:
             pass
         else:
-            if answer != input_word[0]:
-                print("앞서 말한 단어를 잘 봐주세요")
-                player.red_card += 1
-                continue
+            if type(answer) == str:
+                if answer != input_word[0]:
+                    print("앞서 말한 단어를 잘 봐주세요")
+                    player.red_card += 1
+                    continue
+
+            elif type(answer) == tuple:
+                if input_word[0] not in answer:
+                    print("앞서 말한 단어를 잘 봐주세요")
+                    player.red_card += 1
+                    continue
 
         user_speck = player.word_speak(speak_word=input_word)
         if not user_speck:
@@ -173,10 +186,9 @@ def main() -> None:
 if __name__ == '__main__':
     argv = sys.argv
     if len(argv) == 2:
-        if argv[1] == "start":
+        if argv[1] == "--start":
             main()
-        elif argv[1] == "rank":
-            # TODO : 랭크 구현
+        elif argv[1] == "--rank":
             Game.rank()
         else:
             main()
