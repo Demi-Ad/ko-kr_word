@@ -1,0 +1,7 @@
+curd module
+===========
+
+.. automodule:: curd
+   :members:
+   :undoc-members:
+   :show-inheritance:
